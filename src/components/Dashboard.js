@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Tabelle from './Tabelle';
 import Tipps from './Tipps';
 import MeinePunkte from './MeinePunkte';
@@ -6,6 +6,11 @@ import Admin from './Admin';
 
 export default function Dashboard({ spieler, onLogout }) {
   const [page, setPage] = useState('tabelle');
+  const [darkMode, setDarkMode] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   const navItems = [
     { id: 'tabelle', icon: '🏆', label: 'BuLi Tabelle' },
@@ -37,6 +42,13 @@ export default function Dashboard({ spieler, onLogout }) {
           ))}
         </nav>
         <div className="sidebar-logout">
+          <button
+            className="btn-logout"
+            onClick={() => setDarkMode(!darkMode)}
+            style={{ marginBottom: 8 }}
+          >
+            {darkMode ? '☀️ Heller Modus' : '🌙 Dunkler Modus'}
+          </button>
           <button className="btn-logout" onClick={onLogout}>Abmelden</button>
         </div>
       </div>
