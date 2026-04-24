@@ -1,0 +1,518 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0f;
+  --bg2: #13131a;
+  --bg3: #1c1c28;
+  --border: #2a2a3a;
+  --accent: #00d4aa;
+  --accent2: #ff6b35;
+  --text: #f0f0f5;
+  --text2: #8888aa;
+  --gold: #ffd700;
+  --red: #ff4455;
+  --green: #00d4aa;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* LOADING */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 24px;
+}
+.loading-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  letter-spacing: 4px;
+  color: var(--text);
+}
+.loading-logo span { color: var(--accent); }
+.loading-bar {
+  width: 200px;
+  height: 3px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loading-fill {
+  height: 100%;
+  background: var(--accent);
+  animation: loadfill 1.2s ease-in-out infinite;
+}
+@keyframes loadfill {
+  0% { width: 0%; margin-left: 0; }
+  50% { width: 60%; margin-left: 20%; }
+  100% { width: 0%; margin-left: 100%; }
+}
+
+/* LOGIN */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0,212,170,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(255,107,53,0.05) 0%, transparent 70%);
+}
+.login-card {
+  position: relative;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px;
+  width: 400px;
+  max-width: 90vw;
+}
+.login-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 42px;
+  letter-spacing: 4px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.login-logo span { color: var(--accent); }
+.login-subtitle {
+  text-align: center;
+  color: var(--text2);
+  font-size: 14px;
+  margin-bottom: 36px;
+}
+.login-card h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.form-group input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus { border-color: var(--accent); }
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-error {
+  background: rgba(255,68,85,0.1);
+  border: 1px solid rgba(255,68,85,0.3);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--red);
+  font-size: 13px;
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* DASHBOARD LAYOUT */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar {
+  width: 240px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+}
+.sidebar-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 3px;
+  padding: 0 24px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo span { color: var(--accent); }
+.sidebar-user {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-user-verein {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.sidebar-user-name {
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 0;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: var(--bg3); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,212,170,0.05); }
+.nav-item .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+.sidebar-logout {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+.btn-logout {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+.main-content {
+  margin-left: 240px;
+  flex: 1;
+  padding: 32px;
+  max-width: calc(100vw - 240px);
+}
+.page-header {
+  margin-bottom: 32px;
+}
+.page-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  letter-spacing: 2px;
+}
+.page-subtitle {
+  color: var(--text2);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* CARDS */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.card-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  color: var(--text2);
+}
+
+/* TABELLE */
+.tabelle {
+  width: 100%;
+  border-collapse: collapse;
+}
+.tabelle th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.tabelle th.center, .tabelle td.center { text-align: center; }
+.tabelle td {
+  padding: 12px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(42,42,58,0.5);
+}
+.tabelle tr:last-child td { border-bottom: none; }
+.tabelle tr:hover td { background: rgba(255,255,255,0.02); }
+.platz-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg3);
+  color: var(--text2);
+}
+.platz-badge.gold { background: rgba(255,215,0,0.15); color: var(--gold); }
+.platz-badge.silver { background: rgba(192,192,192,0.15); color: #c0c0c0; }
+.platz-badge.bronze { background: rgba(205,127,50,0.15); color: #cd7f32; }
+.platz-badge.cl { background: rgba(0,212,170,0.15); color: var(--accent); }
+.platz-badge.abstieg { background: rgba(255,68,85,0.15); color: var(--red); }
+.verein-name { font-weight: 500; }
+.trainer-name { color: var(--text2); font-size: 13px; }
+.punkte-zahl { font-weight: 700; font-size: 15px; }
+
+/* TIPPS */
+.spieltag-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.spieltag-nav button {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.spieltag-nav button:hover { border-color: var(--accent); color: var(--accent); }
+.spieltag-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.spieltag-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+.spiel-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.spiel-row:last-child { border-bottom: none; }
+.spiel-team {
+  font-size: 14px;
+  font-weight: 500;
+}
+.spiel-team.heim { text-align: right; }
+.spiel-team.auswaerts { text-align: left; }
+.spiel-tipp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tipp-input {
+  width: 48px;
+  height: 48px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.tipp-input:focus { border-color: var(--accent); }
+.tipp-input:disabled { opacity: 0.4; }
+.tipp-separator {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: var(--text2);
+}
+.ergebnis-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--text2);
+}
+.punkte-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+.punkte-chip.p3 { background: rgba(0,212,170,0.2); color: var(--accent); }
+.punkte-chip.p2 { background: rgba(0,212,170,0.1); color: var(--accent); }
+.punkte-chip.p1 { background: rgba(255,215,0,0.1); color: var(--gold); }
+.punkte-chip.p0 { background: rgba(255,68,85,0.1); color: var(--red); }
+
+.btn-save {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: opacity 0.2s;
+}
+.btn-save:hover { opacity: 0.85; }
+.btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.deadline-warning {
+  background: rgba(255,107,53,0.1);
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: var(--accent2);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.success-msg {
+  background: rgba(0,212,170,0.1);
+  border: 1px solid rgba(0,212,170,0.3);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: var(--accent);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* STATS GRID */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  line-height: 1;
+  color: var(--accent);
+}
+.stat-sub {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+/* ADMIN */
+.admin-spiel-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.admin-spiel-row:last-child { border-bottom: none; }
+.btn-confirm {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--text2);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-confirm:hover { border-color: var(--accent); color: var(--accent); }
+.btn-confirm.saved { border-color: var(--accent); color: var(--accent); background: rgba(0,212,170,0.1); }
+
+/* VERGLEICH */
+.vergleich-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(42,42,58,0.5);
+  font-size: 14px;
+}
+.vergleich-punkte {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  text-align: center;
+}
+.vergleich-punkte .vs { font-size: 14px; color: var(--text2); margin: 0 6px; }
+.gewonnen { color: var(--accent); }
+.verloren { color: var(--red); }
+.unentschieden-cl { color: var(--gold); }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main-content { margin-left: 0; max-width: 100vw; padding: 16px; }
+}
