@@ -7,7 +7,7 @@ export default function Admin() {
   const [ergebnisse, setErgebnisse] = useState({});
   const [saving, setSaving] = useState({});
 
-  useEffect(() => { loadSpiele(); }, [spieltag]);
+  useEffect(() => { loadSpiele(); }, [spieltag]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadSpiele() {
     const { data } = await supabase

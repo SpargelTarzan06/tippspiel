@@ -19,7 +19,7 @@ export default function MeinePunkte({ spieler }) {
 
   useEffect(() => {
     if (spieler) loadStats();
-  }, [spieler]);
+  }, [spieler]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadStats() {
     const { data: tipps } = await supabase

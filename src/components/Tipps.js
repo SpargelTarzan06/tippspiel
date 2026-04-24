@@ -16,7 +16,7 @@ export default function Tipps({ spieler }) {
 
   useEffect(() => {
     if (spieltag) loadSpiele();
-  }, [spieltag]);
+  }, [spieltag]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadAktuellerSpieltag() {
     const { data } = await supabase
