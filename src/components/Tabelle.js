@@ -3,8 +3,8 @@ import { supabase } from '../supabase';
 import SpielerDetail from './SpielerDetail';
 
 function berechnePunkte(heimTipp, auswaertsTipp, heimTore, auswaertsTore) {
-  if (heimTipp === null || auswaertsTipp === null) return null;
-  if (heimTore === null || auswaertsTore === null) return null;
+  if (heimTipp === null || heimTipp === undefined || auswaertsTipp === null || auswaertsTipp === undefined) return null;
+  if (heimTore === null || heimTore === undefined || auswaertsTore === null || auswaertsTore === undefined) return null;
   if (heimTipp === heimTore && auswaertsTipp === auswaertsTore) return 3;
   const tippDiff = heimTipp - auswaertsTipp;
   const ergebnisDiff = heimTore - auswaertsTore;
@@ -64,59 +64,86 @@ export default function Tabelle() {
   useEffect(() => { loadTabelle(); }, []);
 
   async function loadTabelle() {
-    const { data: spiele } = await supabase.from('spiele').select('*').eq('ergebnis_eingetragen', true);
-    const { data: allSpiele } = await supabase.from('spiele').select('*');
-    const { data: tipps } = await supabase.from('tipps').select('*');
+    // Load everything we need
+    const { data: allSpiele } = await supabase.from('spiele').select('*').order('spieltag');
+    const { data: allTipps } = await supabase.from('tipps').select('*');
     const { data: spieler } = await supabase.from('spieler').select('*, vereine(*)');
-    if (!spiele || !spieler) return;
 
-    const spieltagPunkte = {};
-    const spieltagTippCount = {};
-    spieler.forEach(s => { spieltagPunkte[s.id] = {}; spieltagTippCount[s.id] = {}; });
+    if (!allSpiele || !spieler) { setLoading(false); return; }
 
-    if (tipps) {
-      tipps.forEach(tipp => {
-        const spiel = spiele.find(s => s.id === tipp.spiel_id);
-        if (!spiel) return;
-        const p = berechnePunkte(tipp.heim_tipp, tipp.auswaerts_tipp, spiel.heim_tore, spiel.auswaerts_tore);
-        if (p === null) return;
-        const st = spiel.spieltag;
-        spieltagPunkte[tipp.spieler_id][st] = (spieltagPunkte[tipp.spieler_id][st] || 0) + p;
-        spieltagTippCount[tipp.spieler_id][st] = (spieltagTippCount[tipp.spieler_id][st] || 0) + 1;
-      });
-    }
+    const erledigteSpiele = allSpiele.filter(s => s.ergebnis_eingetragen);
 
-    const vereinZuSpieler = {};
-    spieler.forEach(s => { vereinZuSpieler[s.vereine?.name] = s; });
-
-    const tabelleMap = {};
+    // Build: spieler.verein.name -> spieler
+    const vereinNameZuSpieler = {};
     spieler.forEach(s => {
-      tabelleMap[s.id] = { spieler: s, punkte: 0, siege: 0, unentschieden: 0, niederlagen: 0, tippPunkte: 0, gegnerTippPunkte: 0 };
+      if (s.vereine?.name) vereinNameZuSpieler[s.vereine.name] = s;
     });
 
+    // Build: spiel_id -> punkte per spieler_id
+    const tippPunkteMap = {}; // { spieler_id: { spiel_id: punkte } }
+    spieler.forEach(s => { tippPunkteMap[s.id] = {}; });
+
+    (allTipps || []).forEach(tipp => {
+      const spiel = erledigteSpiele.find(s => s.id === tipp.spiel_id);
+      if (!spiel) return;
+      const p = berechnePunkte(tipp.heim_tipp, tipp.auswaerts_tipp, spiel.heim_tore, spiel.auswaerts_tore);
+      if (p === null) return;
+      if (!tippPunkteMap[tipp.spieler_id]) tippPunkteMap[tipp.spieler_id] = {};
+      tippPunkteMap[tipp.spieler_id][tipp.spiel_id] = p;
+    });
+
+    // Build: spieler_id -> { spieltag: total_punkte, count }
+    const spieltagStats = {}; // { spieler_id: { spieltag: { punkte, count } } }
+    spieler.forEach(s => { spieltagStats[s.id] = {}; });
+
+    (allTipps || []).forEach(tipp => {
+      const spiel = erledigteSpiele.find(s => s.id === tipp.spiel_id);
+      if (!spiel) return;
+      const p = berechnePunkte(tipp.heim_tipp, tipp.auswaerts_tipp, spiel.heim_tore, spiel.auswaerts_tore);
+      if (p === null) return;
+      const st = spiel.spieltag;
+      if (!spieltagStats[tipp.spieler_id]) spieltagStats[tipp.spieler_id] = {};
+      if (!spieltagStats[tipp.spieler_id][st]) spieltagStats[tipp.spieler_id][st] = { punkte: 0, count: 0 };
+      spieltagStats[tipp.spieler_id][st].punkte += p;
+      spieltagStats[tipp.spieler_id][st].count++;
+    });
+
+    // Calculate table
+    const tabelleMap = {};
+    spieler.forEach(s => {
+      tabelleMap[s.id] = {
+        spieler: s, punkte: 0, siege: 0, unentschieden: 0,
+        niederlagen: 0, tippPunkte: 0, gegnerTippPunkte: 0
+      };
+    });
+
+    // For each spieltag, find matchups via spiele table
     const spieltage = [...new Set(allSpiele.map(s => s.spieltag))].sort((a, b) => a - b);
 
     spieltage.forEach(spieltag => {
       const spieleDesSpieltags = allSpiele.filter(s => s.spieltag === spieltag);
-      const ergebnisspiele = spiele.filter(s => s.spieltag === spieltag);
-      if (ergebnisspiele.length === 0) return;
+      const erledigtDesSpieltags = erledigteSpiele.filter(s => s.spieltag === spieltag);
+      if (erledigtDesSpieltags.length === 0) return;
 
       const erledigtePaarungen = new Set();
+
       spieleDesSpieltags.forEach(spiel => {
-        const heimSpieler = vereinZuSpieler[spiel.heim];
-        const auswaertsSpieler = vereinZuSpieler[spiel.auswaerts];
+        const heimSpieler = vereinNameZuSpieler[spiel.heim];
+        const auswaertsSpieler = vereinNameZuSpieler[spiel.auswaerts];
         if (!heimSpieler || !auswaertsSpieler) return;
 
         const paarungKey = [heimSpieler.id, auswaertsSpieler.id].sort().join('-');
         if (erledigtePaarungen.has(paarungKey)) return;
         erledigtePaarungen.add(paarungKey);
 
-        const heimCount = spieltagTippCount[heimSpieler.id]?.[spieltag] || 0;
-        const auswaertsCount = spieltagTippCount[auswaertsSpieler.id]?.[spieltag] || 0;
-        if (heimCount === 0 || auswaertsCount === 0) return;
+        const heimStats = spieltagStats[heimSpieler.id]?.[spieltag];
+        const auswaertsStats = spieltagStats[auswaertsSpieler.id]?.[spieltag];
 
-        const heimPunkte = spieltagPunkte[heimSpieler.id]?.[spieltag] || 0;
-        const auswaertsPunkte = spieltagPunkte[auswaertsSpieler.id]?.[spieltag] || 0;
+        // Only count if BOTH have at least 1 tipp this spieltag
+        if (!heimStats || heimStats.count === 0 || !auswaertsStats || auswaertsStats.count === 0) return;
+
+        const heimPunkte = heimStats.punkte;
+        const auswaertsPunkte = auswaertsStats.punkte;
 
         tabelleMap[heimSpieler.id].tippPunkte += heimPunkte;
         tabelleMap[auswaertsSpieler.id].tippPunkte += auswaertsPunkte;
@@ -172,7 +199,7 @@ export default function Tabelle() {
               <th className="center">N</th>
               <th className="center">Pkt+</th>
               <th className="center">Diff</th>
-              <th className="center">Punkte</th>
+              <th className="center">Pkt</th>
             </tr>
           </thead>
           <tbody>
@@ -180,7 +207,8 @@ export default function Tabelle() {
               const platz = i + 1;
               const diff = row.tippPunkte - row.gegnerTippPunkte;
               return (
-                <tr key={row.spieler.id} onClick={() => setSelectedSpieler(row.spieler)} style={{ cursor: 'pointer' }}>
+                <tr key={row.spieler.id} onClick={() => setSelectedSpieler(row.spieler)}
+                  style={{ cursor: 'pointer' }}>
                   <td><PlatzBadge platz={platz} /></td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{row.spieler.vereine?.name}</div>
