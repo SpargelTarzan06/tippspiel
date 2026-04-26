@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import SpielerDetail from './SpielerDetail';
 
 function berechnePunkte(heimTipp, auswaertsTipp, heimTore, auswaertsTore) {
   if (heimTipp === null || auswaertsTipp === null) return null;
@@ -7,9 +8,7 @@ function berechnePunkte(heimTipp, auswaertsTipp, heimTore, auswaertsTore) {
   if (heimTipp === heimTore && auswaertsTipp === auswaertsTore) return 3;
   const tippDiff = heimTipp - auswaertsTipp;
   const ergebnisDiff = heimTore - auswaertsTore;
-  const tippTendenz = Math.sign(tippDiff);
-  const ergebnisTendenz = Math.sign(ergebnisDiff);
-  if (tippTendenz !== ergebnisTendenz) return 0;
+  if (Math.sign(tippDiff) !== Math.sign(ergebnisDiff)) return 0;
   if (tippDiff === ergebnisDiff) return 2;
   return 1;
 }
@@ -17,33 +16,33 @@ function berechnePunkte(heimTipp, auswaertsTipp, heimTore, auswaertsTore) {
 export default function Tabelle() {
   const [tabelle, setTabelle] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSpieler, setSelectedSpieler] = useState(null);
 
   useEffect(() => { loadTabelle(); }, []);
 
   async function loadTabelle() {
-    // Lade alle Spiele mit Ergebnissen
     const { data: spiele } = await supabase
-      .from('spiele')
-      .select('*')
-      .eq('ergebnis_eingetragen', true);
+      .from('spiele').select('*').eq('ergebnis_eingetragen', true);
 
-    // Lade alle Tipps
+    const { data: allSpiele } = await supabase
+      .from('spiele').select('*');
+
     const { data: tipps } = await supabase
-      .from('tipps')
-      .select('*, spieler(*, vereine(*))');
+      .from('tipps').select('*');
 
-    // Lade alle Spieler mit Vereinen
     const { data: spieler } = await supabase
-      .from('spieler')
-      .select('*, vereine(*)');
+      .from('spieler').select('*, vereine(*)');
 
     if (!spiele || !spieler) return;
 
     // Berechne Tipp-Punkte pro Spieler pro Spieltag
-    const spieltagPunkte = {}; // { spieler_id: { spieltag: punkte } }
+    // UND merke wie viele Tipps ein Spieler pro Spieltag hat
+    const spieltagPunkte = {};
+    const spieltagTippCount = {};
 
     spieler.forEach(s => {
       spieltagPunkte[s.id] = {};
+      spieltagTippCount[s.id] = {};
     });
 
     if (tipps) {
@@ -52,58 +51,46 @@ export default function Tabelle() {
         if (!spiel) return;
         const p = berechnePunkte(tipp.heim_tipp, tipp.auswaerts_tipp, spiel.heim_tore, spiel.auswaerts_tore);
         if (p === null) return;
-        if (!spieltagPunkte[tipp.spieler_id]) spieltagPunkte[tipp.spieler_id] = {};
-        spieltagPunkte[tipp.spieler_id][spiel.spieltag] = (spieltagPunkte[tipp.spieler_id][spiel.spieltag] || 0) + p;
+        const st = spiel.spieltag;
+        spieltagPunkte[tipp.spieler_id][st] = (spieltagPunkte[tipp.spieler_id][st] || 0) + p;
+        spieltagTippCount[tipp.spieler_id][st] = (spieltagTippCount[tipp.spieler_id][st] || 0) + 1;
       });
     }
 
-    // Hole den Spielplan (wer spielt gegen wen pro Spieltag)
-    // Basierend auf den echten Bundesliga-Paarungen: Verein-zu-Verein Mapping
-    // Jeder Spieler tippt gegen seinen direkten Bundesliga-Gegner
-    const { data: allSpiele } = await supabase.from('spiele').select('*');
-
-    // Erstelle Mapping: vereinName -> spieler
     const vereinZuSpieler = {};
-    spieler.forEach(s => {
-      vereinZuSpieler[s.vereine?.name] = s;
-    });
+    spieler.forEach(s => { vereinZuSpieler[s.vereine?.name] = s; });
 
-    // Berechne Tabellenpunkte
     const tabelleMap = {};
     spieler.forEach(s => {
-      tabelleMap[s.id] = {
-        spieler: s,
-        punkte: 0,
-        siege: 0,
-        unentschieden: 0,
-        niederlagen: 0,
-        tippPunkte: 0,
-      };
+      tabelleMap[s.id] = { spieler: s, punkte: 0, siege: 0, unentschieden: 0, niederlagen: 0, tippPunkte: 0 };
     });
 
-    // Für jeden Spieltag: finde direkte Paarungen
     const spieltage = [...new Set(allSpiele.map(s => s.spieltag))].sort((a, b) => a - b);
 
     spieltage.forEach(spieltag => {
       const spieleDesSpieltags = allSpiele.filter(s => s.spieltag === spieltag);
+      const ergebnisspiele = spiele.filter(s => s.spieltag === spieltag);
+      if (ergebnisspiele.length === 0) return;
+
       const erledigtePaarungen = new Set();
 
       spieleDesSpieltags.forEach(spiel => {
         const heimSpieler = vereinZuSpieler[spiel.heim];
         const auswaertsSpieler = vereinZuSpieler[spiel.auswaerts];
-
         if (!heimSpieler || !auswaertsSpieler) return;
 
         const paarungKey = [heimSpieler.id, auswaertsSpieler.id].sort().join('-');
         if (erledigtePaarungen.has(paarungKey)) return;
         erledigtePaarungen.add(paarungKey);
 
+        const heimTippCount = spieltagTippCount[heimSpieler.id]?.[spieltag] || 0;
+        const auswaertsTippCount = spieltagTippCount[auswaertsSpieler.id]?.[spieltag] || 0;
+
+        // NUR werten wenn BEIDE Spieler mindestens einen Tipp abgegeben haben
+        if (heimTippCount === 0 || auswaertsTippCount === 0) return;
+
         const heimPunkte = spieltagPunkte[heimSpieler.id]?.[spieltag] || 0;
         const auswaertsPunkte = spieltagPunkte[auswaertsSpieler.id]?.[spieltag] || 0;
-
-        // Nur werten wenn mindestens ein Spiel des Spieltags Ergebnisse hat
-        const hatErgebnisse = spieleDesSpieltags.some(s => s.ergebnis_eingetragen);
-        if (!hatErgebnisse) return;
 
         tabelleMap[heimSpieler.id].tippPunkte += heimPunkte;
         tabelleMap[auswaertsSpieler.id].tippPunkte += auswaertsPunkte;
@@ -145,11 +132,15 @@ export default function Tabelle() {
 
   if (loading) return <div style={{ color: 'var(--text2)', padding: '40px' }}>Tabelle wird geladen...</div>;
 
+  if (selectedSpieler) {
+    return <SpielerDetail spieler={selectedSpieler} onBack={() => setSelectedSpieler(null)} />;
+  }
+
   return (
     <div>
       <div className="page-header">
         <div className="page-title">BUNDESLIGA TABELLE</div>
-        <div className="page-subtitle">Saison 2025/26 · Basierend auf Tipp-Vergleichen</div>
+        <div className="page-subtitle">Saison 2025/26 · Klicke auf einen Verein für Details</div>
       </div>
       <div className="card">
         <table className="tabelle">
@@ -166,12 +157,16 @@ export default function Tabelle() {
           </thead>
           <tbody>
             {tabelle.map((row, i) => (
-              <tr key={row.spieler.id}>
+              <tr
+                key={row.spieler.id}
+                onClick={() => setSelectedSpieler(row.spieler)}
+                style={{ cursor: 'pointer' }}
+              >
+                <td><span className={`platz-badge ${getPlatzBadge(i + 1)}`}>{i + 1}</span></td>
                 <td>
-                  <span className={`platz-badge ${getPlatzBadge(i + 1)}`}>{i + 1}</span>
-                </td>
-                <td>
-                  <div className="verein-name">{row.spieler.vereine?.name}</div>
+                  <div className="verein-name" style={{ color: 'var(--accent)' }}>
+                    ⚽ {row.spieler.vereine?.name}
+                  </div>
                   <div className="trainer-name">{row.spieler.name}</div>
                 </td>
                 <td className="center">{row.siege}</td>
@@ -185,8 +180,8 @@ export default function Tabelle() {
         </table>
       </div>
       <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text2)' }}>
-        <span><span className="platz-badge cl" style={{ marginRight: 6 }}>4</span> Champions League</span>
-        <span><span className="platz-badge abstieg" style={{ marginRight: 6 }}>16</span> Abstiegszone</span>
+        <span><span className="platz-badge cl" style={{ marginRight: 6 }}>4</span>Champions League</span>
+        <span><span className="platz-badge abstieg" style={{ marginRight: 6 }}>16</span>Abstiegszone</span>
       </div>
     </div>
   );
