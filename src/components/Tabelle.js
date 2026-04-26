@@ -15,14 +15,13 @@ function berechnePunkte(heimTipp, auswaertsTipp, heimTore, auswaertsTore) {
 
 function PlatzBadge({ platz }) {
   const styles = {
-    1:  { bg: 'rgba(255,215,0,0.15)',   color: '#ffd700', label: '🏆' },
+    1:  { bg: 'rgba(255,215,0,0.2)',    color: '#ffd700', label: '🏆' },
     2:  { bg: 'rgba(0,212,170,0.15)',   color: 'var(--accent)', label: '2' },
     3:  { bg: 'rgba(0,212,170,0.15)',   color: 'var(--accent)', label: '3' },
     4:  { bg: 'rgba(0,212,170,0.15)',   color: 'var(--accent)', label: '4' },
     5:  { bg: 'rgba(100,180,255,0.15)', color: '#64b4ff', label: '5' },
     6:  { bg: 'rgba(180,130,255,0.15)', color: '#b482ff', label: '6' },
-    15: { bg: 'rgba(255,165,0,0.15)',   color: '#ffa500', label: '15' },
-    16: { bg: 'rgba(255,68,85,0.15)',   color: 'var(--red)', label: '16' },
+    16: { bg: 'rgba(255,165,0,0.15)',   color: '#ffa500', label: '16' },
     17: { bg: 'rgba(255,68,85,0.15)',   color: 'var(--red)', label: '17' },
     18: { bg: 'rgba(255,68,85,0.15)',   color: 'var(--red)', label: '18' },
   };
@@ -36,14 +35,14 @@ function PlatzBadge({ platz }) {
   );
 }
 
-function PlatzLegende() {
+function Legende() {
   const items = [
-    { color: '#ffd700', label: '1. Platz – Meister' },
-    { color: 'var(--accent)', label: '2–4 – Champions League' },
-    { color: '#64b4ff', label: '5 – Europa League' },
-    { color: '#b482ff', label: '6 – Conference League' },
-    { color: '#ffa500', label: '15 – Relegation' },
-    { color: 'var(--red)', label: '16–18 – Abstieg' },
+    { color: '#ffd700', label: 'Meister' },
+    { color: 'var(--accent)', label: '2–4 Champions League' },
+    { color: '#64b4ff', label: '5 Europa League' },
+    { color: '#b482ff', label: '6 Conference League' },
+    { color: '#ffa500', label: '16 Relegation' },
+    { color: 'var(--red)', label: '17–18 Abstieg' },
   ];
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: 'var(--text2)', marginTop: 12 }}>
@@ -69,10 +68,8 @@ export default function Tabelle() {
     const { data: allSpiele } = await supabase.from('spiele').select('*');
     const { data: tipps } = await supabase.from('tipps').select('*');
     const { data: spieler } = await supabase.from('spieler').select('*, vereine(*)');
-
     if (!spiele || !spieler) return;
 
-    // Tipp-Punkte pro Spieler pro Spieltag + Tipp-Count
     const spieltagPunkte = {};
     const spieltagTippCount = {};
     spieler.forEach(s => { spieltagPunkte[s.id] = {}; spieltagTippCount[s.id] = {}; });
@@ -94,10 +91,7 @@ export default function Tabelle() {
 
     const tabelleMap = {};
     spieler.forEach(s => {
-      tabelleMap[s.id] = {
-        spieler: s, punkte: 0, siege: 0, unentschieden: 0, niederlagen: 0,
-        tippPunkte: 0, gegnerTippPunkte: 0,
-      };
+      tabelleMap[s.id] = { spieler: s, punkte: 0, siege: 0, unentschieden: 0, niederlagen: 0, tippPunkte: 0, gegnerTippPunkte: 0 };
     });
 
     const spieltage = [...new Set(allSpiele.map(s => s.spieltag))].sort((a, b) => a - b);
@@ -117,9 +111,9 @@ export default function Tabelle() {
         if (erledigtePaarungen.has(paarungKey)) return;
         erledigtePaarungen.add(paarungKey);
 
-        const heimTippCount = spieltagTippCount[heimSpieler.id]?.[spieltag] || 0;
-        const auswaertsTippCount = spieltagTippCount[auswaertsSpieler.id]?.[spieltag] || 0;
-        if (heimTippCount === 0 || auswaertsTippCount === 0) return;
+        const heimCount = spieltagTippCount[heimSpieler.id]?.[spieltag] || 0;
+        const auswaertsCount = spieltagTippCount[auswaertsSpieler.id]?.[spieltag] || 0;
+        if (heimCount === 0 || auswaertsCount === 0) return;
 
         const heimPunkte = spieltagPunkte[heimSpieler.id]?.[spieltag] || 0;
         const auswaertsPunkte = spieltagPunkte[auswaertsSpieler.id]?.[spieltag] || 0;
@@ -131,17 +125,17 @@ export default function Tabelle() {
 
         if (heimPunkte > auswaertsPunkte) {
           tabelleMap[heimSpieler.id].punkte += 3;
-          tabelleMap[heimSpieler.id].siege += 1;
-          tabelleMap[auswaertsSpieler.id].niederlagen += 1;
+          tabelleMap[heimSpieler.id].siege++;
+          tabelleMap[auswaertsSpieler.id].niederlagen++;
         } else if (heimPunkte < auswaertsPunkte) {
           tabelleMap[auswaertsSpieler.id].punkte += 3;
-          tabelleMap[auswaertsSpieler.id].siege += 1;
-          tabelleMap[heimSpieler.id].niederlagen += 1;
+          tabelleMap[auswaertsSpieler.id].siege++;
+          tabelleMap[heimSpieler.id].niederlagen++;
         } else {
-          tabelleMap[heimSpieler.id].punkte += 1;
-          tabelleMap[auswaertsSpieler.id].punkte += 1;
-          tabelleMap[heimSpieler.id].unentschieden += 1;
-          tabelleMap[auswaertsSpieler.id].unentschieden += 1;
+          tabelleMap[heimSpieler.id].punkte++;
+          tabelleMap[auswaertsSpieler.id].punkte++;
+          tabelleMap[heimSpieler.id].unentschieden++;
+          tabelleMap[auswaertsSpieler.id].unentschieden++;
         }
       });
     });
@@ -158,7 +152,7 @@ export default function Tabelle() {
     setLoading(false);
   }
 
-  if (loading) return <div style={{ color: 'var(--text2)', padding: '40px' }}>Tabelle wird geladen...</div>;
+  if (loading) return <div style={{ color: 'var(--text2)', padding: 40 }}>Tabelle wird geladen...</div>;
   if (selectedSpieler) return <SpielerDetail spieler={selectedSpieler} onBack={() => setSelectedSpieler(null)} />;
 
   return (
@@ -186,8 +180,7 @@ export default function Tabelle() {
               const platz = i + 1;
               const diff = row.tippPunkte - row.gegnerTippPunkte;
               return (
-                <tr key={row.spieler.id} onClick={() => setSelectedSpieler(row.spieler)}
-                  style={{ cursor: 'pointer' }}>
+                <tr key={row.spieler.id} onClick={() => setSelectedSpieler(row.spieler)} style={{ cursor: 'pointer' }}>
                   <td><PlatzBadge platz={platz} /></td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{row.spieler.vereine?.name}</div>
@@ -207,7 +200,7 @@ export default function Tabelle() {
           </tbody>
         </table>
       </div>
-      <PlatzLegende />
+      <Legende />
     </div>
   );
 }
