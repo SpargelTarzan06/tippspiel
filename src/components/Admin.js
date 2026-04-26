@@ -145,7 +145,7 @@ export default function Admin() {
           const a = Math.floor(Math.random() * 6);
           tipps[spiel.id] = { heim: h, auswaerts: a };
         }
-        const count = spiele.filter(s => {
+        const count = spiele.filter(s => { // eslint-disable-line no-loop-func
           const t = tipps[s.id];
           return t && is21(t.heim, t.auswaerts);
         }).length;
