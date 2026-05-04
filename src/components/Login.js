@@ -13,7 +13,7 @@ export default function Login({ onLoginSuccess }) {
     setError('');
 
     // 1. Authentifizierung bei Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
+    const {  error } = await supabase.auth.signInWithPassword({ 
       email, 
       password 
     });
