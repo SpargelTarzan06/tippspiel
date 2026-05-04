@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 
-// Hilfsfunktion für das Strategieverbot (2:1 / 1:2)
-function isStrategieTipp(h, a) {
-  return (h === 2 && a === 1) || (h === 1 && a === 2);
-}
-
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('ergebnisse');
   const [spieltag, setSpieltag] = useState(1);
@@ -16,9 +11,7 @@ export default function Admin() {
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [adminTipps, setAdminTipps] = useState({});
   const [adminSaving, setAdminSaving] = useState(false);
-  const [adminError, setAdminError] = useState('');
 
-  // Lade Daten bei Spieltagwechsel oder Start
   useEffect(() => { loadSpielplan(); }, [spieltag]);
   useEffect(() => { loadTrainer(); }, []);
   useEffect(() => {
@@ -50,18 +43,23 @@ export default function Admin() {
     setAdminTipps(map);
   }
 
-  // --- LOGIK: ERGEBNISSE SPEICHERN ---
   async function saveErgebnis(spielId) {
     const e = ergebnisse[spielId];
     if (e.heim === '' || e.gast === '') return;
+    
     setSaving(prev => ({ ...prev, [spielId]: true }));
-    await supabase.from('spielplan').update({
-      ergebnis_heim: parseInt(e.heim), ergebnis_gast: parseInt(e.gast)
+    
+    // WICHTIG: Setzt ergebnis_eingetragen auf true für die Punkte-View!
+    const { error } = await supabase.from('spielplan').update({
+      ergebnis_heim: parseInt(e.heim),
+      ergebnis_gast: parseInt(e.gast),
+      ergebnis_eingetragen: true 
     }).eq('id', spielId);
+
+    if (error) alert("Fehler beim Speichern: " + error.message);
     setSaving(prev => ({ ...prev, [spielId]: false }));
   }
 
-  // --- LOGIK: TIPPS MANUELL SPEICHERN ---
   async function saveTipps() {
     if (!selectedTrainer) return;
     setAdminSaving(true);
@@ -73,103 +71,91 @@ export default function Admin() {
         tipp_heim: parseInt(adminTipps[s.id].heim),
         tipp_gast: parseInt(adminTipps[s.id].gast),
       }));
-    await supabase.from('tipps').upsert(upserts, { onConflict: 'trainer_id,spiel_id' });
-    setAdminSaving(false);
-    alert("Tipps gespeichert!");
-  }
-
-  // --- DIE NEUEN SQL-FUNKTIONEN (RPC) ---
-  async function triggerRandomTipps() {
-    const { error } = await supabase.rpc('generate_random_tipps');
+      
+    const { error } = await supabase.from('tipps').upsert(upserts, { onConflict: 'trainer_id,spiel_id' });
     if (error) alert(error.message);
-    else {
-        alert("Zufallstipps für alle Trainer generiert!");
-        loadTipps(selectedTrainer.id);
-    }
-  }
-
-  async function triggerReset() {
-    if (window.confirm("Bist du sicher? Alle Tipps und Ergebnisse werden gelöscht!")) {
-      await supabase.rpc('reset_all_data');
-      loadSpielplan();
-      setAdminTipps({});
-      alert("Daten zurückgesetzt.");
-    }
+    else alert(`Tipps für ${selectedTrainer.trainer_name} gespeichert!`);
+    
+    setAdminSaving(false);
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1>Admin Dashboard (Bundesliga Tippspiel)</h1>
-
-      {/* Tabs */}
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => setActiveTab('ergebnisse')}>Ergebnisse</button>
-        <button onClick={() => setActiveTab('tipps')}>Tipps verwalten</button>
-        <button onClick={() => setActiveTab('reset')} style={{ color: 'red' }}>Gefahrenzone</button>
+    <div className="admin-container" style={{ padding: '20px' }}>
+      <div className="page-header">
+        <div className="page-title">ADMIN CONTROL</div>
+        <div className="page-subtitle">Ergebnisse & Tipps verwalten</div>
       </div>
 
-      {/* Spieltag-Navigation */}
-      <div style={{ marginBottom: '20px' }}>
+      <div className="admin-tabs" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <button className={`btn-tab ${activeTab === 'ergebnisse' ? 'active' : ''}`} onClick={() => setActiveTab('ergebnisse')}>Ergebnisse</button>
+        <button className={`btn-tab ${activeTab === 'tipps' ? 'active' : ''}`} onClick={() => setActiveTab('tipps')}>Tipps Editor</button>
+        <button className="btn-tab danger" onClick={() => setActiveTab('reset')} style={{ marginLeft: 'auto' }}>Gefahrenzone</button>
+      </div>
+
+      <div className="spieltag-nav" style={{ marginBottom: '20px' }}>
         <button onClick={() => setSpieltag(s => Math.max(1, s - 1))}>←</button>
-        <span style={{ margin: '0 15px', fontWeight: 'bold' }}>Spieltag {spieltag}</span>
+        <span className="spieltag-label">Spieltag {spieltag}</span>
         <button onClick={() => setSpieltag(s => Math.min(34, s + 1))}>→</button>
       </div>
 
-      {/* TAB: ERGEBNISSE */}
-      {activeTab === 'ergebnisse' && (
-        <div className="card">
-          {spiele.map(spiel => (
-            <div key={spiel.id} style={{ marginBottom: '10px', display: 'flex', gap: '10px' }}>
-              <span style={{ width: '150px' }}>{spiel.heim_team}</span>
-              <input type="number" value={ergebnisse[spiel.id]?.heim} 
-                onChange={e => setErgebnisse({...ergebnisse, [spiel.id]: {...ergebnisse[spiel.id], heim: e.target.value}})} style={{ width: '40px' }} />
-              :
-              <input type="number" value={ergebnisse[spiel.id]?.gast} 
-                onChange={e => setErgebnisse({...ergebnisse, [spiel.id]: {...ergebnisse[spiel.id], gast: e.target.value}})} style={{ width: '40px' }} />
-              <span>{spiel.gast_team}</span>
-              <button onClick={() => saveErgebnis(spiel.id)}>{saving[spiel.id] ? '...' : 'Speichern'}</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* TAB: TIPPS */}
-      {activeTab === 'tipps' && (
-        <div>
-          <select onChange={(e) => setSelectedTrainer(alleTrainer.find(t => t.id == e.target.value))}>
-            {alleTrainer.map(t => <option key={t.id} value={t.id}>{t.trainer_name} ({t.verein})</option>)}
-          </select>
-          
-          <button onClick={triggerRandomTipps} style={{ marginLeft: '10px' }}>🎲 Random Tipps für ALLE</button>
-
-          <div style={{ marginTop: '20px' }}>
+      <div className="card">
+        {activeTab === 'ergebnisse' && (
+          <div className="admin-list">
             {spiele.map(spiel => (
-              <div key={spiel.id} style={{ marginBottom: '5px' }}>
-                {spiel.heim_team} 
-                <input type="number" value={adminTipps[spiel.id]?.heim || ''} 
-                  onChange={e => setAdminTipps({...adminTipps, [spiel.id]: {...adminTipps[spiel.id], heim: e.target.value}})} />
-                :
-                <input type="number" value={adminTipps[spiel.id]?.gast || ''} 
-                  onChange={e => setAdminTipps({...adminTipps, [spiel.id]: {...adminTipps[spiel.id], gast: e.target.value}})} />
-                {spiel.gast_team}
+              <div key={spiel.id} className="admin-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '1px solid var(--bg3)' }}>
+                <span style={{ flex: 1, textAlign: 'right' }}>{spiel.heim_team}</span>
+                <input type="number" className="tipp-input" value={ergebnisse[spiel.id]?.heim} 
+                  onChange={e => setErgebnisse({...ergebnisse, [spiel.id]: {...ergebnisse[spiel.id], heim: e.target.value}})} />
+                <span>:</span>
+                <input type="number" className="tipp-input" value={ergebnisse[spiel.id]?.gast} 
+                  onChange={e => setErgebnisse({...ergebnisse, [spiel.id]: {...ergebnisse[spiel.id], gast: e.target.value}})} />
+                <span style={{ flex: 1 }}>{spiel.gast_team}</span>
+                <button className="btn-primary" onClick={() => saveErgebnis(spiel.id)}>{saving[spiel.id] ? '...' : 'Speichern'}</button>
               </div>
             ))}
-            <button onClick={saveTipps} disabled={adminSaving} style={{ marginTop: '10px', padding: '10px', background: 'green', color: 'white' }}>
+          </div>
+        )}
+
+        {activeTab === 'tipps' && (
+          <div>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              <select className="tipp-input" style={{ width: 'auto', flex: 1 }} value={selectedTrainer?.id} onChange={(e) => setSelectedTrainer(alleTrainer.find(t => t.id == e.target.value))}>
+                {alleTrainer.map(t => <option key={t.id} value={t.id}>{t.trainer_name} ({t.verein})</option>)}
+              </select>
+              <button className="btn-secondary" onClick={async () => { await supabase.rpc('generate_random_tipps'); loadTipps(selectedTrainer.id); alert("Erledigt!"); }}>🎲 Random Tipps (Alle)</button>
+            </div>
+
+            {spiele.map(spiel => (
+              <div key={spiel.id} className="admin-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                <span style={{ width: '120px' }}>{spiel.heim_team}</span>
+                <input type="number" className="tipp-input" value={adminTipps[spiel.id]?.heim || ''} 
+                  onChange={e => setAdminTipps({...adminTipps, [spiel.id]: {...adminTipps[spiel.id], heim: e.target.value}})} />
+                :
+                <input type="number" className="tipp-input" value={adminTipps[spiel.id]?.gast || ''} 
+                  onChange={e => setAdminTipps({...adminTipps, [spiel.id]: {...adminTipps[spiel.id], gast: e.target.value}})} />
+                <span>{spiel.gast_team}</span>
+              </div>
+            ))}
+            <button className="btn-primary" onClick={saveTipps} disabled={adminSaving} style={{ marginTop: '20px', width: '100%' }}>
               Tipps für {selectedTrainer?.trainer_name} speichern
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB: RESET */}
-      {activeTab === 'reset' && (
-        <div style={{ border: '1px solid red', padding: '20px' }}>
-          <h3>Achtung!</h3>
-          <button onClick={triggerReset} style={{ background: 'red', color: 'white', padding: '10px' }}>
-            ALLE SAISON-DATEN LÖSCHEN
-          </button>
-        </div>
-      )}
+        {activeTab === 'reset' && (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <h3 style={{ color: 'var(--red)' }}>ACHTUNG!</h3>
+            <p>Dies löscht alle Tipps und Ergebnisse der gesamten Saison.</p>
+            <button className="btn-primary" style={{ background: 'var(--red)' }} onClick={async () => { 
+              if(window.confirm("Wirklich ALLES löschen?")) { 
+                await supabase.rpc('reset_all_data'); 
+                loadSpielplan(); 
+                alert("Reset durchgeführt.");
+              }
+            }}>SAISON KOMPLETT ZURÜCKSETZEN</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

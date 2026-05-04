@@ -1,74 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import Tabelle from './Tabelle';
-import Tipps from './Tipps';
-import MeinePunkte from './MeinePunkte';
-import Admin from './Admin';
+import { supabase } from '../supabase';
 
-export default function Dashboard({ spieler, onLogout }) {
-  const [page, setPage] = useState('tabelle');
-  const [darkMode, setDarkMode] = useState(true);
+export default function Dashboard({ trainer }) {
+  const [nextMatch, setNextMatch] = useState(null);
+  const [lastMatch, setLastMatch] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
+    if (trainer) loadDashboardData();
+  }, [trainer]);
 
-  const navItems = [
-    { id: 'tabelle', icon: '🏆', label: 'Tabelle' },
-    { id: 'tipps', icon: '✏️', label: 'Tipps' },
-    { id: 'meine', icon: '📊', label: 'Punkte' },
-    ...(spieler?.ist_admin ? [{ id: 'admin', icon: '⚙️', label: 'Admin' }] : []),
-  ];
+  async function loadDashboardData() {
+    // Hol dir das aktuelle H2H-Duell (nächster Spieltag ohne Ergebnis)
+    const { data: h2h } = await supabase
+      .from('h2h_auswertung')
+      .or(`heim_trainer.eq."${trainer.trainer_name}",gast_trainer.eq."${trainer.trainer_name}"`)
+      .order('spieltag', { ascending: true });
+
+    if (h2h) {
+      const next = h2h.find(m => m.punkte_heim === null);
+      const last = [...h2h].reverse().find(m => m.punkte_heim !== null);
+      setNextMatch(next);
+      setLastMatch(last);
+    }
+    setLoading(false);
+  }
+
+  if (loading) return <div className="loading">Lade Dashboard...</div>;
 
   return (
     <div className="dashboard">
-      {/* Desktop Sidebar */}
-      <div className="sidebar">
-        <div className="sidebar-logo">TIPP<span>LIGA</span></div>
-        {spieler && (
-          <div className="sidebar-user">
-            <div className="sidebar-user-verein">{spieler.vereine?.kurz}</div>
-            <div className="sidebar-user-name">{spieler.name}</div>
-          </div>
-        )}
-        <nav className="sidebar-nav">
-          {navItems.map(item => (
-            <div key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
-              onClick={() => setPage(item.id)}>
-              <span className="nav-icon">{item.icon}</span>
-              {item.label}
-            </div>
-          ))}
-        </nav>
-        <div className="sidebar-logout">
-          <button className="btn-logout" onClick={() => setDarkMode(!darkMode)} style={{ marginBottom: 8 }}>
-            {darkMode ? '☀️ Hell' : '🌙 Dunkel'}
-          </button>
-          <button className="btn-logout" onClick={onLogout}>Abmelden</button>
-        </div>
+      <div className="page-header">
+        <div className="page-title">WILLKOMMEN, COACH!</div>
+        <div className="page-subtitle">{trainer.trainer_name} @ {trainer.verein}</div>
       </div>
 
-      {/* Main Content */}
-      <main className="main-content">
-        {page === 'tabelle' && <Tabelle />}
-        {page === 'tipps' && <Tipps spieler={spieler} />}
-        {page === 'meine' && <MeinePunkte spieler={spieler} />}
-        {page === 'admin' && spieler?.ist_admin && <Admin />}
-      </main>
-
-      {/* Mobile Bottom Nav */}
-      <nav className="mobile-nav">
-        {navItems.map(item => (
-          <div key={item.id} className={`mobile-nav-item ${page === item.id ? 'active' : ''}`}
-            onClick={() => setPage(item.id)}>
-            <span className="mobile-nav-icon">{item.icon}</span>
-            <span className="mobile-nav-label">{item.label}</span>
+      <div className="dash-grid">
+        {/* Nächstes Duell */}
+        <div className="card highlight">
+          <div className="card-title">NÄCHSTES DUELL (ST {nextMatch?.spieltag})</div>
+          <div className="h2h-preview">
+            <div className="h2h-side">
+              <span className="h2h-team">{trainer.verein}</span>
+            </div>
+            <div className="h2h-vs">VS</div>
+            <div className="h2h-side">
+              <span className="h2h-team">
+                {nextMatch?.heim_trainer === trainer.trainer_name ? nextMatch?.gast_trainer : nextMatch?.heim_trainer}
+              </span>
+            </div>
           </div>
-        ))}
-        <div className="mobile-nav-item" onClick={() => setDarkMode(!darkMode)}>
-          <span className="mobile-nav-icon">{darkMode ? '☀️' : '🌙'}</span>
-          <span className="mobile-nav-label">Modus</span>
+          <button className="btn-primary" style={{marginTop: '15px'}} onClick={() => window.location.hash = '#tipps'}>
+            Jetzt Tipps abgeben
+          </button>
         </div>
-      </nav>
+
+        {/* Letztes Ergebnis */}
+        {lastMatch && (
+          <div className="card">
+            <div className="card-title">LETZTER SPIELTAG (ST {lastMatch.spieltag})</div>
+            <div className="last-result">
+              <div className="res-row">
+                <span>{lastMatch.heim_trainer}</span>
+                <span className="res-score">{lastMatch.punkte_heim}</span>
+              </div>
+              <div className="res-row">
+                <span>{lastMatch.gast_trainer}</span>
+                <span className="res-score">{lastMatch.punkte_gast}</span>
+              </div>
+              <div className="res-status">
+                {(lastMatch.heim_trainer === trainer.trainer_name && lastMatch.h2h_punkte_heim === 3) || 
+                 (lastMatch.gast_trainer === trainer.trainer_name && lastMatch.h2h_punkte_gast === 3) 
+                 ? '✅ SIEG' : '❌ KEIN SIEG'}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
