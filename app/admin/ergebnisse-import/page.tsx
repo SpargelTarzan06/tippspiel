@@ -170,8 +170,8 @@ async function checkAdmin() {
 
       const startsWithMatchday = /^\d+\s/.test(cleanedLine)
 
-      let matchday = currentMatchday
-      let textWithoutMatchday = cleanedLine
+let matchday: number | null = currentMatchday
+let textWithoutMatchday = cleanedLine
 
       if (startsWithMatchday) {
         const matchdayMatch = cleanedLine.match(/^(\d+)\s+/)
@@ -183,7 +183,7 @@ async function checkAdmin() {
         }
       }
 
-      if (!matchday) {
+      if (matchday === null) {
         results.push({
           matchday: 0,
           homeTeam: '',
