@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import NavBar from '../../../components/NavBar'
 import { supabase } from '../../../lib/supabaseClient'
 
-type PlaceholderPlayer = {
+type Player = {
   id: string
-  display_name: string
+  display_name: string | null
+  email?: string | null
 }
 
 type Team = {
@@ -39,7 +40,7 @@ export default function TippsImportPage() {
   const router = useRouter()
 
   const [season, setSeason] = useState<any>(null)
-  const [players, setPlayers] = useState<PlaceholderPlayer[]>([])
+  const [players, setPlayers] = useState<Player[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [matches, setMatches] = useState<Match[]>([])
 
@@ -56,29 +57,29 @@ export default function TippsImportPage() {
     loadData()
   }, [])
 
-async function checkAdmin() {
-  const { data: userData } = await supabase.auth.getUser()
+  async function checkAdmin() {
+    const { data: userData } = await supabase.auth.getUser()
 
-  if (!userData.user) {
-    window.location.href = '/login'
-    return
+    if (!userData.user) {
+      window.location.href = '/login'
+      return
+    }
+
+    const { data: profileData, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userData.user.id)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Admin check failed:', error)
+      return
+    }
+
+    if (profileData?.role !== 'admin') {
+      window.location.href = '/'
+    }
   }
-
-  const { data: profileData, error } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userData.user.id)
-    .maybeSingle()
-
-  if (error) {
-    console.error('Admin check failed:', error)
-    return
-  }
-
-  if (profileData?.role !== 'admin') {
-    window.location.href = '/'
-  }
-}
 
   async function loadData() {
     setLoading(true)
@@ -98,10 +99,20 @@ async function checkAdmin() {
 
     setSeason(seasonData)
 
-    const { data: playerData } = await supabase
-      .from('placeholder_players')
-      .select('id, display_name')
+    const { data: playerData, error: playerError } = await supabase
+      .from('profiles')
+      .select('id, display_name, email, role')
       .order('display_name')
+
+    if (playerError) {
+      setMessage(`Spieler konnten nicht geladen werden: ${playerError.message}`)
+      setLoading(false)
+      return
+    }
+
+    const realPlayers = (playerData || []).filter((player: any) => {
+      return player.role !== 'placeholder'
+    })
 
     const { data: teamsData } = await supabase
       .from('teams')
@@ -112,12 +123,12 @@ async function checkAdmin() {
       .select('id, matchday, home_team_id, away_team_id')
       .eq('season_id', seasonData.id)
 
-    setPlayers(playerData || [])
+    setPlayers(realPlayers || [])
     setTeams(teamsData || [])
     setMatches(matchesData || [])
 
-    if (playerData && playerData.length > 0) {
-      setSelectedPlayerId(playerData[0].id)
+    if (realPlayers && realPlayers.length > 0) {
+      setSelectedPlayerId(realPlayers[0].id)
     }
 
     setLoading(false)
@@ -147,6 +158,7 @@ async function checkAdmin() {
       .replaceAll('union berlin', '1. fc union berlin')
       .replaceAll('heidenheim', '1. fc heidenheim')
       .replaceAll('bayer leverkusen', 'bayer 04 leverkusen')
+      .replaceAll('schalke 04', 'fc schalke 04')
 
       .replace(/\s+/g, ' ')
       .trim()
@@ -306,7 +318,7 @@ async function checkAdmin() {
   }
 
   async function saveTips() {
-    if (!selectedPlayerId) return
+    if (!selectedPlayerId || !season?.id) return
 
     const validTips = parsedTips.filter(
       (tip) => tip.status === 'ok' && tip.matchId
@@ -321,15 +333,21 @@ async function checkAdmin() {
     setMessage('')
 
     for (const tip of validTips) {
-      const { error } = await supabase.rpc(
-        'admin_upsert_placeholder_prediction',
-        {
-          target_placeholder_player_id: selectedPlayerId,
-          target_match_id: tip.matchId,
-          new_pred_home: tip.predHome,
-          new_pred_away: tip.predAway,
-        }
-      )
+      const { error } = await supabase
+        .from('predictions')
+        .upsert(
+          {
+            user_id: selectedPlayerId,
+            match_id: tip.matchId,
+            season_id: season.id,
+            pred_home: tip.predHome,
+            pred_away: tip.predAway,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'user_id,match_id',
+          }
+        )
 
       if (error) {
         setMessage(`Fehler: ${error.message}`)
@@ -338,7 +356,7 @@ async function checkAdmin() {
       }
     }
 
-    setMessage(`${validTips.length} Tipps gespeichert.`)
+    setMessage(`${validTips.length} Tipps für echten User gespeichert.`)
     setSaving(false)
   }
 
@@ -359,7 +377,7 @@ async function checkAdmin() {
           <>
             <div style={{ display: 'grid', gap: 16, marginBottom: 20 }}>
               <label>
-                Platzhalter-Spieler:
+                Spieler:
                 <select
                   value={selectedPlayerId}
                   onChange={(e) => setSelectedPlayerId(e.target.value)}
@@ -367,7 +385,7 @@ async function checkAdmin() {
                 >
                   {players.map((player) => (
                     <option key={player.id} value={player.id}>
-                      {player.display_name}
+                      {player.display_name || player.email || player.id}
                     </option>
                   ))}
                 </select>
