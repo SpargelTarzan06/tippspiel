@@ -188,7 +188,7 @@ async function checkAdmin() {
 
       const startsWithMatchday = /^\d+\s/.test(cleanedLine)
 
-      let matchday = currentMatchday
+      let matchday: number | null = currentMatchday
       let textWithoutMatchday = cleanedLine
 
       if (startsWithMatchday) {
