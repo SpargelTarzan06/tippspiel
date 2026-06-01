@@ -253,44 +253,22 @@ export default function AdminSondertippsEintragenPage() {
 
         if (!hasValue) continue
 
-        const row =
-          selectedPlayerSource === 'profile'
-            ? {
-                season_id: season.id,
-                category_id: category.id,
-                user_id: selectedPlayerId,
-                placeholder_player_id: null,
-                answer_index: i,
-                team_id:
-                  category.answer_type === 'team' ? answer.team_id : null,
-                text_answer:
-                  category.answer_type === 'text'
-                    ? answer.text_answer.trim()
-                    : null,
-                number_answer:
-                  category.answer_type === 'number'
-                    ? Number(answer.number_answer)
-                    : null,
-                updated_at: new Date().toISOString(),
-              }
-            : {
-                season_id: season.id,
-                category_id: category.id,
-                user_id: null,
-                placeholder_player_id: selectedPlayerId,
-                answer_index: i,
-                team_id:
-                  category.answer_type === 'team' ? answer.team_id : null,
-                text_answer:
-                  category.answer_type === 'text'
-                    ? answer.text_answer.trim()
-                    : null,
-                number_answer:
-                  category.answer_type === 'number'
-                    ? Number(answer.number_answer)
-                    : null,
-                updated_at: new Date().toISOString(),
-              }
+const row: any = {
+  season_id: season.id,
+  category_id: category.id,
+  user_id: selectedPlayerSource === 'profile' ? selectedPlayerId : null,
+  placeholder_player_id:
+    selectedPlayerSource === 'placeholder' ? selectedPlayerId : null,
+  answer_index: i,
+  team_id: category.answer_type === 'team' ? answer.team_id : null,
+  text_answer:
+    category.answer_type === 'text' ? answer.text_answer.trim() : null,
+  number_answer:
+    category.answer_type === 'number'
+      ? Number(answer.number_answer)
+      : null,
+  updated_at: new Date().toISOString(),
+}
 
         const onConflict =
           selectedPlayerSource === 'profile'
