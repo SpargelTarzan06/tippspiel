@@ -249,9 +249,9 @@ export default function ChampionsLeagueDuelDetailPage() {
                 <div
                   style={{
                     ...scoreStyle,
-                    minWidth: isMobile ? 150 : 190,
-                    fontSize: isMobile ? 22 : 26,
-                    padding: isMobile ? '12px 18px' : '14px 24px',
+                    minWidth: isMobile ? 92 : 112,
+                    fontSize: isMobile ? 20 : 24,
+                    padding: isMobile ? '10px 12px' : '12px 16px',
                   }}
                 >
                   {duel?.home_tip_points ?? '-'} : {duel?.away_tip_points ?? '-'}
