@@ -249,17 +249,18 @@ export default function ChampionsLeagueDuelDetailPage() {
                 <div
                   style={{
                     ...scoreStyle,
-                    minWidth: isMobile ? 92 : 112,
+                    minWidth: isMobile ? 80 : 112,
                     fontSize: isMobile ? 20 : 24,
-                    padding: isMobile ? '10px 12px' : '12px 16px',
+                    padding: isMobile ? '8px 10px' : '12px 16px',
                   }}
                 >
                   {duel?.home_tip_points ?? '-'} : {duel?.away_tip_points ?? '-'}
                 </div>
 
-                <div style={subtitleStyle}>
-                  Champions League · {getClMatchdayLabel(duel?.matchday, duel?.phase)}
-                </div>
+<div style={subtitleStyle}>
+  <div>Champions League</div>
+  <div>{getClMatchdayLabel(duel?.matchday, duel?.phase)}</div>
+</div>
               </div>
 
               <TeamHeader team={awayTeam} alignRight />
@@ -536,7 +537,11 @@ const subtitleStyle: React.CSSProperties = {
   color: '#1d4ed8',
   fontSize: 11,
   fontWeight: 900,
-  lineHeight: 1.2,
+  lineHeight: 1.15,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 2,
 }
 
 const infoBoxStyle: React.CSSProperties = {
