@@ -77,7 +77,7 @@ export default function ChampionsLeagueDuelDetailPage() {
     }
 
     if (!duelData) {
-      setMessage(`CL-Duell wurde nicht gefunden. ID: ${duelId}`)
+      setMessage('CL-Duell wurde nicht gefunden.')
       setLoading(false)
       return
     }
@@ -105,11 +105,8 @@ export default function ChampionsLeagueDuelDetailPage() {
       (teamsData || []).map((team) => [team.id, team])
     )
 
-    const home = teamMap[duelData.home_team_id]
-    const away = teamMap[duelData.away_team_id]
-
-    setHomeTeam(home)
-    setAwayTeam(away)
+    setHomeTeam(teamMap[duelData.home_team_id])
+    setAwayTeam(teamMap[duelData.away_team_id])
 
     const homeParticipant = await getParticipantForTeam(
       duelData.season_id,
@@ -170,29 +167,6 @@ export default function ChampionsLeagueDuelDetailPage() {
     seasonId: string,
     teamId: string
   ): Promise<Participant | null> {
-    const { data: placeholderAssignment } = await supabase
-      .from('placeholder_team_assignments')
-      .select('placeholder_player_id')
-      .eq('season_id', seasonId)
-      .eq('team_id', teamId)
-      .maybeSingle()
-
-    if (placeholderAssignment?.placeholder_player_id) {
-      const { data: player } = await supabase
-        .from('placeholder_players')
-        .select('id, display_name')
-        .eq('id', placeholderAssignment.placeholder_player_id)
-        .single()
-
-      if (player) {
-        return {
-          type: 'placeholder',
-          id: player.id,
-          name: player.display_name,
-        }
-      }
-    }
-
     const { data: userAssignment } = await supabase
       .from('user_team_assignments')
       .select('user_id')
@@ -225,17 +199,6 @@ export default function ChampionsLeagueDuelDetailPage() {
     matchIds: string[]
   ) {
     if (!participant || matchIds.length === 0) return {}
-
-    if (participant.type === 'placeholder') {
-      const { data } = await supabase
-        .from('placeholder_predictions')
-        .select('match_id, pred_home, pred_away, points')
-        .eq('season_id', seasonId)
-        .eq('placeholder_player_id', participant.id)
-        .in('match_id', matchIds)
-
-      return Object.fromEntries((data || []).map((p) => [p.match_id, p]))
-    }
 
     const { data } = await supabase
       .from('predictions')
@@ -282,20 +245,20 @@ export default function ChampionsLeagueDuelDetailPage() {
             >
               <TeamHeader team={homeTeam} />
 
-              <div style={{ textAlign: 'center' }}>
+              <div style={{ textAlign: 'center', minWidth: 0 }}>
                 <div
                   style={{
                     ...scoreStyle,
-                    minWidth: isMobile ? 92 : 112,
-                    fontSize: isMobile ? 20 : 24,
-                    padding: isMobile ? '10px 12px' : '12px 16px',
+                    minWidth: isMobile ? 150 : 190,
+                    fontSize: isMobile ? 22 : 26,
+                    padding: isMobile ? '12px 18px' : '14px 24px',
                   }}
                 >
                   {duel?.home_tip_points ?? '-'} : {duel?.away_tip_points ?? '-'}
                 </div>
 
                 <div style={subtitleStyle}>
-                  Champions League · {duel ? getClMatchdayLabel(duel.matchday, duel.phase) : ''}
+                  Champions League · {getClMatchdayLabel(duel?.matchday, duel?.phase)}
                 </div>
               </div>
 
@@ -415,7 +378,7 @@ function MobileTipCompareCard({
       className="card"
       style={{
         padding: 16,
-        background: 'linear-gradient(135deg, #ffffff, #eff6ff)',
+        background: 'linear-gradient(135deg, #ffffff, #eef4ff)',
       }}
     >
       <div
@@ -425,6 +388,7 @@ function MobileTipCompareCard({
           marginBottom: 14,
           lineHeight: 1.3,
           textAlign: 'center',
+          fontSize: 18,
         }}
       >
         {row.home_team_name} - {row.away_team_name}
@@ -447,7 +411,7 @@ function MobileTipCompareCard({
         <div
           style={{
             borderRadius: 16,
-            background: '#1e3a8a',
+            background: 'linear-gradient(135deg, #1d4ed8, #1e3a8a)',
             color: 'white',
             textAlign: 'center',
             fontWeight: 950,
@@ -541,7 +505,7 @@ const duelHeaderStyle: React.CSSProperties = {
   border: '2px solid #2563eb',
   borderRadius: 24,
   background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
-  boxShadow: '0 16px 34px rgba(37,99,235,0.14)',
+  boxShadow: '0 16px 34px rgba(37,99,235,0.18)',
   marginBottom: 24,
 }
 
@@ -555,16 +519,18 @@ const teamNameStyle: React.CSSProperties = {
   fontSize: 14,
   lineHeight: 1.15,
   color: '#0f172a',
-  overflowWrap: 'anywhere',
+  overflowWrap: 'normal',
+  wordBreak: 'normal',
   fontWeight: 900,
+  maxWidth: 96,
 }
 
 const scoreStyle: React.CSSProperties = {
   borderRadius: 22,
-  background: '#1e3a8a',
+  background: 'linear-gradient(135deg, #1d4ed8, #1e3a8a)',
   color: 'white',
   fontWeight: 950,
-  boxShadow: '0 14px 28px rgba(30,58,138,0.22)',
+  boxShadow: '0 14px 28px rgba(37,99,235,0.22)',
 }
 
 const subtitleStyle: React.CSSProperties = {
@@ -572,6 +538,7 @@ const subtitleStyle: React.CSSProperties = {
   color: '#1d4ed8',
   fontSize: 12,
   fontWeight: 900,
+  lineHeight: 1.3,
 }
 
 const infoBoxStyle: React.CSSProperties = {

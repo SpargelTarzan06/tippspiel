@@ -605,5 +605,5 @@ const pointsTdStyle: React.CSSProperties = {
   ...tdStyle,
   textAlign: 'center',
   fontWeight: 950,
-  color: '#0f172a',
+  color: '#016a34a',
 }
