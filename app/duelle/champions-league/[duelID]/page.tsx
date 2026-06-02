@@ -519,10 +519,8 @@ const teamNameStyle: React.CSSProperties = {
   fontSize: 14,
   lineHeight: 1.15,
   color: '#0f172a',
-  overflowWrap: 'normal',
-  wordBreak: 'normal',
+  overflowWrap: 'anywhere',
   fontWeight: 900,
-  maxWidth: 96,
 }
 
 const scoreStyle: React.CSSProperties = {
@@ -536,9 +534,9 @@ const scoreStyle: React.CSSProperties = {
 const subtitleStyle: React.CSSProperties = {
   marginTop: 8,
   color: '#1d4ed8',
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 900,
-  lineHeight: 1.3,
+  lineHeight: 1.2,
 }
 
 const infoBoxStyle: React.CSSProperties = {

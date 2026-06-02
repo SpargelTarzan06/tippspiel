@@ -480,15 +480,13 @@ function ClDuelCard({
   const showScore = unlocked && homeScore !== null && awayScore !== null
 
   return (
-    <div style={duelCardStyle(highlighted)}>
+    <div style={clDuelCardStyle(highlighted)}>
       <div style={duelGridStyle}>
         <TeamBox team={match.home_team} align="right" isMine={match.home_team_id === myTeamId} />
 
-        <ScoreBox
-          score={showScore ? `${homeScore} : ${awayScore}` : '- : -'}
-          label=""
-          highlighted={highlighted}
-        />
+<ClScoreBox
+  score={showScore ? `${homeScore} : ${awayScore}` : '- : -'}
+/>
 
         <TeamBox team={match.away_team} align="left" isMine={match.away_team_id === myTeamId} />
       </div>
@@ -497,7 +495,7 @@ function ClDuelCard({
         {!unlocked ? (
           <span style={lockedTextStyle}>Tippvergleich noch gesperrt</span>
         ) : match.id ? (
-          <Link href={`/duelle/champions-league/${match.id}`} style={buttonLinkStyle}>
+          <Link href={`/duelle/champions-league/${match.id}`} style={clButtonLinkStyle}>
             Tippvergleich ansehen
           </Link>
         ) : (
@@ -595,7 +593,26 @@ function ScoreBox({
     </div>
   )
 }
-
+function ClScoreBox({ score }: { score: string }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div
+        style={{
+          minWidth: 104,
+          padding: '10px 14px',
+          borderRadius: 22,
+          background: 'linear-gradient(135deg, #2563eb, #1e3a8a)',
+          color: 'white',
+          fontSize: 20,
+          fontWeight: 950,
+          boxShadow: '0 14px 28px rgba(37,99,235,0.22)',
+        }}
+      >
+        {score}
+      </div>
+    </div>
+  )
+}
 function ModernTabButton({
   active,
   onClick,
@@ -825,4 +842,30 @@ const buttonLinkStyle: React.CSSProperties = {
 const lockedTextStyle: React.CSSProperties = {
   color: '#b45309',
   fontWeight: 800,
+}
+
+const clDuelCardStyle = (highlighted: boolean): React.CSSProperties => ({
+  border: highlighted ? '2px solid #2563eb' : '1px solid #dbeafe',
+  borderRadius: 22,
+  padding: highlighted ? 22 : 18,
+  background: highlighted
+    ? 'linear-gradient(135deg, #eff6ff, #dbeafe)'
+    : 'linear-gradient(135deg, #ffffff, #f8fbff)',
+  boxShadow: highlighted
+    ? '0 16px 34px rgba(37,99,235,0.16)'
+    : '0 10px 24px rgba(15,23,42,0.06)',
+})
+
+const clButtonLinkStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: 38,
+  padding: '0 14px',
+  borderRadius: 999,
+  background: 'linear-gradient(135deg, #2563eb, #1e3a8a)',
+  color: 'white',
+  textDecoration: 'none',
+  fontWeight: 900,
+  boxShadow: '0 10px 22px rgba(37,99,235,0.2)',
 }
