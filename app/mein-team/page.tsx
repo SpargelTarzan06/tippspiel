@@ -436,11 +436,13 @@ export default function MeinTeamPage() {
             <SectionTitle title="Finanzen" />
 
             <div style={financeGridStyle}>
-              <FinanceCard
-                title="Kontostand"
-                value={`${balance >= 0 ? '+' : ''}${balance.toFixed(2)} €`}
-                highlight
-              />
+<FinanceCard
+  title="Kontostand"
+  value={`${balance >= 0 ? '+' : ''}${balance.toFixed(2)} €`}
+  positive={balance > 0}
+  negative={balance < 0}
+  highlight={balance === 0}
+/>
 
               <FinanceCard
                 title="Preisgeld gesamt"
@@ -875,7 +877,13 @@ function FinanceCard({
     <div
       style={{
         ...boxStyle,
-        background: highlight ? '#ecfdf5' : '#ffffff',
+        background: negative
+  ? '#fff1f2'
+  : positive
+  ? '#ecfdf5'
+  : highlight
+  ? '#f8fafc'
+  : '#ffffff',
       }}
     >
       <div style={statLabelStyle}>{title}</div>
@@ -884,7 +892,11 @@ function FinanceCard({
           fontSize: highlight ? 26 : 22,
           fontWeight: 950,
           marginTop: 4,
-          color: negative ? '#dc2626' : positive || highlight ? '#16a34a' : '#0f172a',
+          color: negative
+  ? '#dc2626'
+  : positive
+  ? '#16a34a'
+  : '#0f172a',
         }}
       >
         {value}
