@@ -562,11 +562,24 @@ function FormCurve({
   const pointXs = [58, 169, 280, 391, 502]
   const getY = (result: string) => result === 'win' ? 32 : result === 'draw' ? 92 : 152
 
-  const points = matches.map((match, index) => ({
-    x: pointXs[index] ?? 58 + index * 111,
+const leftPadding = 58
+const rightPadding = 58
+
+const usableWidth = viewWidth - leftPadding - rightPadding
+
+const points = matches.map((match, index) => {
+  const x =
+    matches.length === 1
+      ? viewWidth / 2
+      : leftPadding +
+        (usableWidth / (matches.length - 1)) * index
+
+  return {
+    x,
     y: getY(match.result),
     match,
-  }))
+  }
+})
 
   const linePath = points
     .map((p, index) => `${index === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
@@ -617,14 +630,16 @@ function FormCurve({
         ))}
       </svg>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${matches.length}, 1fr)`,
-          gap: 6,
-          marginTop: 4,
-        }}
-      >
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: `repeat(${matches.length}, 1fr)`,
+    gap: 0,
+    marginTop: 4,
+    paddingLeft: 42,
+    paddingRight: 42,
+  }}
+>
         {matches.map((match, index) => (
           <div
             key={index}
