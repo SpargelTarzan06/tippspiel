@@ -119,16 +119,22 @@ export default function DuellePage() {
       .from('matchday_tip_status')
       .select('*')
       .order('matchday')
+      const { data: deadlineData } = await supabase
+  .from('matchday_deadlines')
+  .select('matchday, deadline_at')
+  .eq('season_id', seasonData.id)
+  .order('matchday', { ascending: true })
 
     setStatusMap(
       Object.fromEntries((statusData || []).map((row) => [row.matchday, row]))
     )
 
-    const currentDay =
-      statusData?.find((row) => !unlockedDays.includes(row.matchday))
-        ?.matchday ?? allDays[allDays.length - 1]
+const currentDay = getCurrentMatchdayFromDeadlines(
+  deadlineData || [],
+  allDays[0] ?? 1
+)
 
-    setMatchday(currentDay)
+setMatchday(currentDay)
     setLoading(false)
   }
 
@@ -156,7 +162,28 @@ export default function DuellePage() {
 
     setClDuels(clData || [])
   }
+function getCurrentMatchdayFromDeadlines(
+  deadlines: { matchday: number; deadline_at: string | null }[],
+  fallback: number
+) {
+  const now = new Date().getTime()
 
+  const sorted = deadlines
+    .filter((d) => d.deadline_at)
+    .sort((a, b) => a.matchday - b.matchday)
+
+  let current = fallback
+
+  for (const deadline of sorted) {
+    const deadlineTime = new Date(deadline.deadline_at as string).getTime()
+
+    if (deadlineTime <= now) {
+      current = deadline.matchday
+    }
+  }
+
+  return current
+}
   const status = statusMap[matchday]
   const unlocked = unlockedMatchdays.includes(matchday)
 
@@ -290,7 +317,15 @@ export default function DuellePage() {
               active={activeTab === 'bundesliga'}
               onClick={() => {
                 setActiveTab('bundesliga')
-                setMatchday(matchdays[0] ?? 1)
+                setMatchday(
+  getCurrentMatchdayFromDeadlines(
+    Object.values(statusMap).map((row: any) => ({
+      matchday: row.matchday,
+      deadline_at: row.deadline_at,
+    })),
+    matchdays[0] ?? 1
+  )
+)
               }}
             >
               Bundesliga-Duelle
