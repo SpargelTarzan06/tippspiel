@@ -1,12 +1,14 @@
 'use client'
+'use client'
 
+export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  
 
   const [checking, setChecking] = useState(true)
   const [ready, setReady] = useState(false)
@@ -20,8 +22,10 @@ export default function ResetPasswordPage() {
   }, [])
 
   async function verifyRecoveryToken() {
-    const tokenHash = searchParams.get('token_hash')
-    const type = searchParams.get('type')
+const params = new URLSearchParams(window.location.search)
+
+const tokenHash = params.get('token_hash')
+const type = params.get('type')
 
     if (!tokenHash || type !== 'recovery') {
       setMessage('Der Passwort-Link ist ungültig oder abgelaufen.')
