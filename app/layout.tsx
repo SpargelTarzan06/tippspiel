@@ -13,8 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LSV Bundesliga Tippspiel",
-  description: "Modernes Fußballtippspiel für Bundesliga, Champions League und Sondertipps",
+  title: "Bundesliga Tippduell",
 };
 
 export default function RootLayout({
