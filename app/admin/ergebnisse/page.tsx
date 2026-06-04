@@ -181,35 +181,37 @@ export default function AdminErgebnissePage() {
     setCalculating(true)
     setMessage('')
 
-    const { error: bundesligaError } = await supabase.rpc(
-      'calculate_matchday',
-      {
-        target_season_name: activeSeason.name,
-        target_matchday: matchday,
-      }
-    )
+const { error: snapshotError } = await supabase.rpc(
+  'save_standings_snapshot',
+  {
+    p_season_id: activeSeason.id,
+    p_matchday: matchday - 1,
+  }
+)
 
-    if (bundesligaError) {
-      setMessage(`Fehler Bundesliga: ${bundesligaError.message}`)
-      setCalculating(false)
-      return
-    }
+if (snapshotError) {
+  setMessage(
+    `Tabellenhistorie fehlgeschlagen: ${snapshotError.message}`
+  )
+  setCalculating(false)
+  return
+}
 
-    const { error: clError } = await supabase.rpc(
-      'calculate_cl_matchday',
-      {
-        target_season_name: activeSeason.name,
-        target_matchday: matchday,
-      }
-    )
+const { error: bundesligaError } = await supabase.rpc(
+  'calculate_matchday',
+  {
+    target_season_name: activeSeason.name,
+    target_matchday: matchday,
+  }
+)
 
-    const { error: snapshotError } = await supabase.rpc(
-      'save_standings_snapshot',
-      {
-        p_season_id: activeSeason.id,
-        p_matchday: matchday,
-      }
-    )
+const { error: clError } = await supabase.rpc(
+  'calculate_cl_matchday',
+  {
+    target_season_name: activeSeason.name,
+    target_matchday: matchday,
+  }
+)
 
     if (snapshotError) {
       setMessage(

@@ -404,33 +404,37 @@ export default function MeinTeamPage() {
             <SectionTitle title="Historische Bestleistungen" />
 
             <div style={cardGridStyle}>
-              <AchievementCard
-                eyebrow="Verein"
-                title="Bestes Bundesliga-Ergebnis"
-                value={bestBundesligaResult ? `${bestBundesligaResult.bundesliga_rank}. Platz` : '-'}
-                subtitle={bestBundesligaResult ? `Saison ${bestBundesligaResult.season_name}` : 'Noch kein Ergebnis'}
-              />
+<AchievementCard
+  variant="club"
+  eyebrow="Verein"
+  title="Bestes Bundesliga-Ergebnis"
+  value={bestBundesligaResult ? `${bestBundesligaResult.bundesliga_rank}. Platz` : '-'}
+  subtitle={bestBundesligaResult ? `Saison ${bestBundesligaResult.season_name}` : 'Noch kein Ergebnis'}
+/>
 
-              <AchievementCard
-                eyebrow="Verein"
-                title="Bestes Champions-League-Ergebnis"
-                value={bestClResult?.cl_result ?? '-'}
-                subtitle={bestClResult ? `Saison ${bestClResult.season_name}` : 'Noch kein Ergebnis'}
-              />
+<AchievementCard
+  variant="club"
+  eyebrow="Verein"
+  title="Bestes Champions-League-Ergebnis"
+  value={bestClResult?.cl_result ?? '-'}
+  subtitle={bestClResult ? `Saison ${bestClResult.season_name}` : 'Noch kein Ergebnis'}
+/>
 
-              <AchievementCard
-                eyebrow="Trainer"
-                title="Bestes Bundesliga-Ergebnis"
-                value={bestTrainerBundesligaResult ? `${bestTrainerBundesligaResult.bundesliga_rank}. Platz` : '-'}
-                subtitle={bestTrainerBundesligaResult ? `Saison ${bestTrainerBundesligaResult.season_name} mit ${bestTrainerBundesligaResult.team_name}` : 'Noch kein Ergebnis'}
-              />
+<AchievementCard
+  variant="trainer"
+  eyebrow="Trainer"
+  title="Bestes Bundesliga-Ergebnis"
+  value={bestTrainerBundesligaResult ? `${bestTrainerBundesligaResult.bundesliga_rank}. Platz` : '-'}
+  subtitle={bestTrainerBundesligaResult ? `Saison ${bestTrainerBundesligaResult.season_name} mit ${bestTrainerBundesligaResult.team_name}` : 'Noch kein Ergebnis'}
+/>
 
-              <AchievementCard
-                eyebrow="Trainer"
-                title="Bestes Champions-League-Ergebnis"
-                value={bestTrainerClResult?.cl_result ?? '-'}
-                subtitle={bestTrainerClResult ? `Saison ${bestTrainerClResult.season_name} mit ${bestTrainerClResult.team_name}` : 'Noch kein Ergebnis'}
-              />
+<AchievementCard
+  variant="trainer"
+  eyebrow="Trainer"
+  title="Bestes Champions-League-Ergebnis"
+  value={bestTrainerClResult?.cl_result ?? '-'}
+  subtitle={bestTrainerClResult ? `Saison ${bestTrainerClResult.season_name} mit ${bestTrainerClResult.team_name}` : 'Noch kein Ergebnis'}
+/>
             </div>
 
             <SectionTitle title="Finanzen" />
@@ -610,7 +614,7 @@ function FormCurve({
   logoMap: Record<string, string | null>
 }) {
   const viewWidth = 560
-  const viewHeight = 210
+  const viewHeight = 250
   const pointXs = [58, 169, 280, 391, 502]
   const getY = (result: string) => result === 'win' ? 32 : result === 'draw' ? 92 : 152
 
@@ -663,74 +667,47 @@ const points = matches.map((match, index) => {
 
         <path d={linePath} fill="none" stroke="#16a34a" strokeWidth={5} strokeLinecap="round" />
 
-        {points.map((point, index) => (
-          <g key={index}>
-            <circle cx={point.x} cy={point.y} r={8} fill="#0f172a" />
-            <circle cx={point.x} cy={point.y} r={4} fill="#ffffff" />
+{points.map((point, index) => (
+  <g key={index}>
+    <circle cx={point.x} cy={point.y} r={8} fill="#0f172a" />
+    <circle cx={point.x} cy={point.y} r={4} fill="#ffffff" />
 
-            <text
-              x={point.x}
-              y={184}
-              textAnchor="middle"
-              fontSize={18}
-              fontWeight="900"
-              fill="#0f172a"
-            >
-              {point.match.own_tip_points}:{point.match.opponent_tip_points}
-            </text>
-          </g>
-        ))}
+    <text
+      x={point.x}
+      y={184}
+      textAnchor="middle"
+      fontSize={18}
+      fontWeight="900"
+      fill="#0f172a"
+    >
+      {point.match.own_tip_points}:{point.match.opponent_tip_points}
+    </text>
+
+    {logoMap[point.match.opponent_team_name] && (
+      <image
+        href={logoMap[point.match.opponent_team_name] ?? ''}
+        x={point.x - 12}
+        y={196}
+        width="24"
+        height="24"
+      />
+    )}
+
+    <text
+      x={point.x}
+      y={232}
+      textAnchor="middle"
+      fontSize={11}
+      fontWeight="800"
+      fill="#64748b"
+    >
+      {shortOpponentName(point.match.opponent_team_name)}
+    </text>
+  </g>
+))}
       </svg>
 
-<div
-  style={{
-    display: 'grid',
-    gridTemplateColumns: `repeat(${matches.length}, 1fr)`,
-    gap: 0,
-    marginTop: 4,
-    paddingLeft: 42,
-    paddingRight: 42,
-  }}
->
-        {matches.map((match, index) => (
-          <div
-            key={index}
-            style={{
-              minWidth: 0,
-              textAlign: 'center',
-              fontSize: 11,
-              color: '#64748b',
-              fontWeight: 800,
-            }}
-          >
-            {logoMap[match.opponent_team_name] && (
-              <img
-                src={logoMap[match.opponent_team_name] ?? ''}
-                alt=""
-                style={{
-                  width: 24,
-                  height: 24,
-                  objectFit: 'contain',
-                  margin: '0 auto 3px',
-                  display: 'block',
-                }}
-              />
-            )}
 
-            <div
-              style={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {shortOpponentName(match.opponent_team_name)}
-            </div>
-
-
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
@@ -857,22 +834,62 @@ function AchievementCard({
   title,
   value,
   subtitle,
+  variant = 'neutral',
 }: {
   eyebrow: string
   title: string
   value: string
   subtitle?: string
+  variant?: 'club' | 'trainer' | 'neutral'
 }) {
+  const isClub = variant === 'club'
+  const isTrainer = variant === 'trainer'
+
   return (
-    <div style={boxStyle}>
-      <div style={cardEyebrowStyle}>{eyebrow}</div>
-      <div style={{ color: '#64748b', fontSize: 13, fontWeight: 800 }}>{title}</div>
-      <div style={{ fontSize: 22, fontWeight: 950, marginTop: 6 }}>{value}</div>
+    <div
+      style={{
+        ...boxStyle,
+        background: isClub
+          ? 'linear-gradient(135deg, #f5f3ff, #ede9fe)'
+          : isTrainer
+          ? 'linear-gradient(135deg, #ecfdf5, #dcfce7)'
+          : '#ffffff',
+        border: isClub
+          ? '1px solid #c4b5fd'
+          : isTrainer
+          ? '1px solid #86efac'
+          : '1px solid #e2e8f0',
+      }}
+    >
+      <div
+        style={{
+          ...cardEyebrowStyle,
+          background: isClub ? '#ede9fe' : isTrainer ? '#dcfce7' : '#ecfdf5',
+          color: isClub ? '#5b21b6' : isTrainer ? '#166534' : '#166534',
+        }}
+      >
+        {eyebrow}
+      </div>
+
+      <div style={{ color: '#64748b', fontSize: 13, fontWeight: 800 }}>
+        {title}
+      </div>
+
+      <div
+        style={{
+          fontSize: 22,
+          fontWeight: 950,
+          marginTop: 6,
+          color: isClub ? '#4c1d95' : isTrainer ? '#14532d' : '#0f172a',
+        }}
+      >
+        {value}
+      </div>
+
       {subtitle && <div style={cardSubtitleStyle}>{subtitle}</div>}
     </div>
   )
 }
-
 function FinanceCard({
   title,
   value,
@@ -983,6 +1000,9 @@ function shortOpponentName(name: string) {
     'FC Augsburg': 'Augsburg',
     'Eintracht Frankfurt': 'Frankfurt',
     'TSG Hoffenheim': 'Hoffenheim',
+    'FC Schalke 04': 'Schalke',
+    'SV Elversberg': 'Elversberg',
+    'SC Paderborn 07': 'Paderborn',
   }
 
   return map[name] ?? name
