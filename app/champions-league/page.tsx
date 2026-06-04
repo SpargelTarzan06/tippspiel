@@ -149,13 +149,14 @@ export default function ChampionsLeaguePage() {
             <SectionTitle title="Vorrunde" />
             <GroupGrid groups={preliminaryGroups} highlightTop={3} />
 
-            <MatchdayList
-              title="Spiele"
-              matches={preliminaryMatches}
-              startMatchday={7}
-              endMatchday={16}
-              groups={preliminaryGroups}
-            />
+<MatchdayList
+  key="preliminary-round"
+  title="Spiele"
+  matches={preliminaryMatches}
+  startMatchday={7}
+  endMatchday={16}
+  groups={preliminaryGroups}
+/>
           </>
         )}
 
@@ -164,13 +165,14 @@ export default function ChampionsLeaguePage() {
             <SectionTitle title="Hauptrunde" />
             <GroupGrid groups={mainGroups} highlightTop={2} />
 
-            <MatchdayList
-              title="Spiele"
-              matches={mainMatches}
-              startMatchday={17}
-              endMatchday={26}
-              groups={mainGroups}
-            />
+<MatchdayList
+  key="main-round"
+  title="Spiele"
+  matches={mainMatches}
+  startMatchday={17}
+  endMatchday={26}
+  groups={mainGroups}
+/>
           </>
         )}
 
