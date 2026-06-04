@@ -316,9 +316,8 @@ const messageStyle: React.CSSProperties = {
 
 const imageStyle: React.CSSProperties = {
   width: '100%',
+  height: 'auto',
   borderRadius: 16,
-  maxHeight: 420,
-  objectFit: 'cover',
   display: 'block',
 }
 
