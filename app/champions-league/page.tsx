@@ -218,12 +218,23 @@ function GroupGrid({
             <tbody>
               {group.standings.map((team: any, index: number) => {
                 const rank = index + 1
-                const zoneColor =
-                  rank <= highlightTop
-                    ? '#16a34a'
-                    : rank === highlightTop + 1
-                    ? '#f59e0b'
-                    : '#e2e8f0'
+let zoneColor = '#e2e8f0'
+
+// Vorrunde
+if (highlightTop === 3) {
+  if (rank <= 3) {
+    zoneColor = '#16a34a'
+  } else if (rank === 4) {
+    zoneColor = '#f59e0b'
+  }
+}
+
+// Hauptrunde
+if (highlightTop === 2) {
+  if (rank <= 2) {
+    zoneColor = '#16a34a'
+  }
+}
 
                 return (
                   <tr key={team.team_id}>
@@ -340,7 +351,9 @@ function MatchdayList({
           </div>
 
           <div style={{ display: 'grid', gap: 16 }}>
-            {Object.entries(groupedMatches).map(([group, groupMatches]) => (
+            {Object.entries(groupedMatches)
+  .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
+  .map(([group, groupMatches]) => (
               <div
                 key={group}
                 className="card"
