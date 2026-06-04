@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
 
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -27,7 +28,11 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-
+    if (rememberMe) {
+  localStorage.setItem('remember_login', 'true')
+} else {
+  localStorage.removeItem('remember_login')
+}
     window.location.href = '/'
   }
 
@@ -113,20 +118,40 @@ export default function LoginPage() {
             style={inputStyle}
           />
 
-          <input
-            type="password"
-            placeholder="Passwort"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={inputStyle}
-          />
+<input
+  type="password"
+  placeholder="Passwort"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  style={inputStyle}
+/>
 
-          {mode === 'login' ? (
-            <button
-              onClick={handleLogin}
-              disabled={loading}
-              style={primaryButtonStyle}
-            >
+{mode === 'login' && (
+  <label
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      fontSize: 14,
+      fontWeight: 600,
+      color: '#333',
+    }}
+  >
+    <input
+      type="checkbox"
+      checked={rememberMe}
+      onChange={(e) => setRememberMe(e.target.checked)}
+    />
+    Eingeloggt bleiben
+  </label>
+)}
+
+{mode === 'login' ? (
+  <button
+    onClick={handleLogin}
+    disabled={loading}
+    style={primaryButtonStyle}
+  >
               {loading ? 'Lädt...' : 'Login'}
             </button>
           ) : (
