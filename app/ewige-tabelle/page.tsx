@@ -439,6 +439,9 @@ function shortTeamName(name: string) {
     'FC Augsburg': 'Augsburg',
     'Eintracht Frankfurt': 'Frankfurt',
     'TSG Hoffenheim': 'Hoffenheim',
+    'FC Schalke 04': 'Schalke',
+    'SV Elversberg': 'Elversberg',
+    'SC Paderborn 07': 'Paderborn',
   }
 
   return map[name] ?? name
