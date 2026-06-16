@@ -4,9 +4,7 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
 
-  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
@@ -36,38 +34,9 @@ export default function LoginPage() {
     window.location.href = '/'
   }
 
-  const handleSignup = async () => {
-    if (!displayName.trim()) {
-      setMessage('Bitte gib deinen Namen ein.')
-      return
-    }
+  
 
-    setLoading(true)
-    setMessage('')
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: displayName.trim(),
-        },
-      },
-    })
-
-    if (error) {
-      setMessage(error.message)
-      setLoading(false)
-      return
-    }
-
-    setMessage(
-      'Account erstellt. Du kannst dich jetzt einloggen. Ein Admin muss dich danach noch deinem Team zuordnen.'
-    )
-
-    setMode('login')
-    setPassword('')
-    setLoading(false)
   }
 
   return (
@@ -91,32 +60,29 @@ export default function LoginPage() {
           boxShadow: '0 6px 18px rgba(0,0,0,0.06)',
         }}
       >
-        <h1 style={{ marginTop: 0 }}>
-          {mode === 'login' ? 'Login' : 'Registrieren'}
-        </h1>
+<h1 style={{ marginTop: 0 }}>
+  Login
+</h1>
 
-        <p style={{ color: '#666', marginBottom: 20 }}>
-          {mode === 'login'
-            ? 'Melde dich mit deinem Account an.'
-            : 'Erstelle deinen Account. Danach ordnet dich ein Admin deinem Team zu.'}
-        </p>
+<p style={{ color: '#666', marginBottom: 20 }}>
+  Melde dich mit deinem Account an.
+</p>
 
         <div style={{ display: 'grid', gap: 12 }}>
-          {mode === 'signup' && (
-            <input
-              placeholder="Anzeigename"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              style={inputStyle}
-            />
-          )}
+<button
+  onClick={handleLogin}
+  disabled={loading}
+  style={primaryButtonStyle}
+>
+  {loading ? 'Lädt...' : 'Login'}
+</button>
 
-          <input
-            placeholder="E-Mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle}
-          />
+<input
+  placeholder="E-Mail"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  style={inputStyle}
+/>
 
 <input
   type="password"
@@ -126,74 +92,31 @@ export default function LoginPage() {
   style={inputStyle}
 />
 
-{mode === 'login' && (
-  <label
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      fontSize: 14,
-      fontWeight: 600,
-      color: '#333',
-    }}
-  >
-    <input
-      type="checkbox"
-      checked={rememberMe}
-      onChange={(e) => setRememberMe(e.target.checked)}
-    />
-    Eingeloggt bleiben
-  </label>
-)}
+<label
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 14,
+    fontWeight: 600,
+    color: '#333',
+  }}
+>
+  <input
+    type="checkbox"
+    checked={rememberMe}
+    onChange={(e) => setRememberMe(e.target.checked)}
+  />
+  Eingeloggt bleiben
+</label>
 
-{mode === 'login' ? (
-  <button
-    onClick={handleLogin}
-    disabled={loading}
-    style={primaryButtonStyle}
-  >
-              {loading ? 'Lädt...' : 'Login'}
-            </button>
-          ) : (
-            <button
-              onClick={handleSignup}
-              disabled={loading}
-              style={primaryButtonStyle}
-            >
-              {loading ? 'Erstellt...' : 'Registrieren'}
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              setMode(mode === 'login' ? 'signup' : 'login')
-              setMessage('')
-            }}
-            style={secondaryButtonStyle}
-          >
-            {mode === 'login'
-              ? 'Noch keinen Account? Registrieren'
-              : 'Schon einen Account? Zum Login'}
-          </button>
-        </div>
-
-        {message && (
-          <p
-            style={{
-              marginTop: 16,
-              padding: 10,
-              borderRadius: 8,
-              background: '#f5f5f5',
-              border: '1px solid #ddd',
-            }}
-          >
-            {message}
-          </p>
-        )}
-      </section>
-    </main>
-  )
-}
+<button
+  onClick={handleLogin}
+  disabled={loading}
+  style={primaryButtonStyle}
+>
+  {loading ? 'Lädt...' : 'Login'}
+</button>
 
 const inputStyle: React.CSSProperties = {
   padding: 12,
